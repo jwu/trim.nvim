@@ -1,11 +1,16 @@
-local vim = vim
 local api = vim.api
+local util = require 'trim.util'
 
 local trimmer = {}
 
 function trimmer.trim(range, line1, line2)
   local config = require('trim.config').get()
   local save = vim.fn.winsaveview()
+  local bufnr = api.nvim_get_current_buf()
+
+  -- Use extmark to track cursor position (auto-adjusts when lines are deleted)
+  local ns_id = api.nvim_create_namespace('trim_cursor')
+  local extmark_id = api.nvim_buf_set_extmark(bufnr, ns_id, save.lnum - 1, save.col, {})
 
   if range and range > 0 then
     -- range specified: only trim trailing whitespace in the given range
@@ -14,8 +19,8 @@ function trimmer.trim(range, line1, line2)
   else
     -- trim_trailing with cursor line exclusion
     if config.trim_trailing and not config.trim_current_line then
-      local lnum = vim.api.nvim_win_get_cursor(0)[1]
-      local last = vim.api.nvim_buf_line_count(0)
+      local lnum = save.lnum
+      local last = api.nvim_buf_line_count(0)
 
       -- trim lines above cursor
       if lnum > 1 then
@@ -35,16 +40,15 @@ function trimmer.trim(range, line1, line2)
     end
   end
 
-  vim.fn.winrestview(save)
-end
+  -- Restore cursor position from extmark (which auto-adjusted)
+  local pos = api.nvim_buf_get_extmark_by_id(bufnr, ns_id, extmark_id, {})
+  api.nvim_buf_del_extmark(bufnr, ns_id, extmark_id)
 
-local has_value = function(tbl, val)
-  for _, v in ipairs(tbl) do
-    if v == val then
-      return true
-    end
+  if pos and pos[1] then
+    save.lnum = pos[1] + 1 -- extmark uses 0-indexed lines
+    save.col = pos[2]
   end
-  return false
+  vim.fn.winrestview(save)
 end
 
 function trimmer.enable(is_configured)
@@ -55,7 +59,7 @@ function trimmer.enable(is_configured)
     group = 'TrimNvim',
     pattern = opts.pattern,
     callback = function()
-      if not has_value(config.ft_blocklist, vim.bo.filetype) then
+      if not util.has_value(config.ft_blocklist, vim.bo.filetype) then
         trimmer.trim()
       end
     end,
