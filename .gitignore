@@ -45,9 +45,6 @@ luac.out
 # Dev sample file
 dev/sample.txt
 
-# Pi coding agent
-.pi/
-
 # Editor / tooling
 .claude/
 .agents/
