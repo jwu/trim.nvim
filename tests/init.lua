@@ -12,13 +12,13 @@ function M.load(plugin)
   if not vim.loop.fs_stat(package_root .. name) then
     print('Installing ' .. plugin)
     vim.fn.mkdir(package_root, 'p')
-    vim.fn.system {
+    vim.fn.system({
       'git',
       'clone',
       '--depth=1',
       'https://github.com/' .. plugin .. '.git',
       package_root .. '/' .. name,
-    }
+    })
   end
 end
 

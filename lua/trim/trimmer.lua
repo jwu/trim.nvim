@@ -1,15 +1,32 @@
 local api = vim.api
 local util = require 'trim.util'
 
+---@class trim.trimmer
 local trimmer = {}
 
+---Trim trailing whitespace in the current line only.
+function trimmer.trim_current_line()
+  local save = vim.fn.winsaveview()
+  api.nvim_exec2(
+    string.format('keepjumps keeppatterns silent! %d,%ds/\\s\\+$//e', save.lnum, save.lnum),
+    {}
+  )
+  vim.fn.winrestview(save)
+end
+
+---Trim the buffer.
+---When range is provided, only trim trailing whitespace in the given lines.
+---When no range, apply all configured trim patterns.
+---@param range? number non-zero if range was given
+---@param line1? number start line of range
+---@param line2? number end line of range
 function trimmer.trim(range, line1, line2)
   local config = require('trim.config').get()
   local save = vim.fn.winsaveview()
   local bufnr = api.nvim_get_current_buf()
 
   -- Use extmark to track cursor position (auto-adjusts when lines are deleted)
-  local ns_id = api.nvim_create_namespace('trim_cursor')
+  local ns_id = api.nvim_create_namespace 'trim_cursor'
   local extmark_id = api.nvim_buf_set_extmark(bufnr, ns_id, save.lnum - 1, save.col, {})
 
   if range and range > 0 then
@@ -51,6 +68,8 @@ function trimmer.trim(range, line1, line2)
   vim.fn.winrestview(save)
 end
 
+---Enable automatic trimming on BufWritePre.
+---@param is_configured? boolean true when called from setup() (suppresses notification)
 function trimmer.enable(is_configured)
   local opts = { pattern = '*' }
   local config = require('trim.config').get()
@@ -69,6 +88,7 @@ function trimmer.enable(is_configured)
   end
 end
 
+---Disable automatic trimming.
 function trimmer.disable()
   pcall(vim.api.nvim_del_augroup_by_name, 'TrimNvim')
   if require('trim.config').get().notifications then
@@ -76,17 +96,17 @@ function trimmer.disable()
   end
 end
 
+---Check if automatic trimming is enabled.
+---@return boolean
 function trimmer.is_enabled()
-  local status = pcall(vim.api.nvim_get_autocmds, {
+  local autocommands = api.nvim_get_autocmds({
     group = 'TrimNvim',
     event = 'BufWritePre',
   })
-  if not status then
-    return false
-  end
-  return true
+  return #autocommands > 0
 end
 
+---Toggle automatic trimming on/off.
 function trimmer.toggle()
   if not trimmer.is_enabled() then
     trimmer.enable(false)

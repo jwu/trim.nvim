@@ -3,11 +3,14 @@
 ## Development
 
 ```bash
-make dev      # Open nvim with minimal config for testing
-make test     # Run tests
-make lint     # Run luacheck
-make format   # Run stylua
+just dev      # Open nvim with minimal config for testing (or: make dev)
+just test     # Run tests (or: make test)
+just lint     # Run selene + luacheck (or: make lint)
+just fmt      # Run stylua (or: make format)
+just check    # Run all checks (or: make check)
 ```
+
+This project follows [nvim-best-practices](https://github.com/nvim-neorocks/nvim-best-practices).
 
 ## Submitting a new pattern for trimming
 

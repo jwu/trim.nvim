@@ -75,12 +75,26 @@ require('trim').setup({
 
 ## Commands
 
-### `:TrimToggle`
-
-Toggle trim on save.
-
-### `:Trim`
+### `:Trim [range]`
 
 Trim the buffer right away. Supports range selection (e.g., `:'<,'>Trim` to trim only selected lines).
 
 When a range is specified, only trailing whitespace is removed within the selected lines. The `trim_first_line` and `trim_last_line` options are not applied in range mode.
+
+### `:TrimToggle`
+
+Toggle trim on save.
+
+## Mappings
+
+The following `<Plug>` mappings are available for custom keybindings:
+
+```lua
+vim.keymap.set('n', '<leader>tl', '<Plug>(TrimLine)')     -- trim current line
+vim.keymap.set('n', '<leader>tb', '<Plug>(TrimBuffer)')   -- trim entire buffer
+vim.keymap.set('n', '<leader>tt', '<Plug>(TrimToggle)')   -- toggle trim on save
+```
+
+## Health Check
+
+Run `:checkhealth trim` to check the plugin status, Neovim version requirement, and highlight group configuration.

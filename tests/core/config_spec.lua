@@ -39,14 +39,14 @@ describe('default config', function()
 end)
 
 describe('config', function()
-  config.setup {
+  config.setup({
     ft_blocklist = { 'markdown' },
     trim_on_write = false,
     trim_trailing = false,
     trim_last_line = false,
     trim_first_line = false,
     patterns = { [[%s/\(\n\n\)\n\+/\1/]] },
-  }
+  })
 
   local actual = config.get()
 
@@ -63,7 +63,7 @@ describe('config', function()
   end)
 
   it('keeps compatability', function()
-    config.setup { disable = { 'lua' } }
+    config.setup({ disable = { 'lua' } })
     local actual = config.get()
 
     -- disable is deprecated, use ft_blocklist instead

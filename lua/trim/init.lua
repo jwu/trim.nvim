@@ -1,13 +1,15 @@
+---@class trim
+---@field setup fun(opts?: trim.Config)
 local M = {}
 
-local config = require 'trim.config'
-local trimmer = require 'trim.trimmer'
-
+---Setup trim.nvim with user configuration.
+---@param opt? trim.Config
 function M.setup(opt)
+  local config = require 'trim.config'
   config.setup(opt)
   local cfg = config.get()
   if cfg.trim_on_write then
-    trimmer.enable(true)
+    require('trim.trimmer').enable(true)
   end
 end
 

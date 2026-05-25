@@ -1,7 +1,23 @@
+---@class trim.Config
+---@field ft_blocklist string[]
+---@field patterns string[]
+---@field trim_on_write boolean
+---@field trim_trailing boolean
+---@field trim_last_line boolean
+---@field trim_first_line boolean
+---@field trim_current_line boolean
+---@field highlight boolean
+---@field highlight_bg string
+---@field highlight_ctermbg string
+---@field notifications boolean
+
+---@type trim.Config
+---@diagnostic disable-next-line: missing-fields
 local M = {
   config = {},
 }
 
+---@type trim.Config
 local default_config = {
   ft_blocklist = {},
   patterns = {},
@@ -16,39 +32,56 @@ local default_config = {
   notifications = true,
 }
 
+---Build trim patterns from config options.
+---@param cfg trim.Config
+---@return string[]
+local function build_patterns(cfg)
+  local patterns = {}
+
+  for _, p in ipairs(cfg.patterns) do
+    patterns[#patterns + 1] = p
+  end
+
+  if cfg.trim_trailing and cfg.trim_current_line then
+    patterns[#patterns + 1] = [[%s/\s\+$//e]]
+  end
+  if cfg.trim_first_line then
+    patterns[#patterns + 1] = [[%s/\%^\n\+//]]
+  end
+  if cfg.trim_last_line then
+    patterns[#patterns + 1] = [[%s/\($\n\s*\)\+\%$//]]
+  end
+
+  return patterns
+end
+
+---Setup configuration with user options.
+---@param opts? trim.Config
 function M.setup(opts)
   opts = opts or {}
 
   -- compatability: disable -> ft_blocklist
   if opts.disable and not opts.ft_blocklist then
-    vim.notify('`disable` is deprecated, use `ft_blocklist` instead', vim.log.levels.WARN, { title = 'trim.nvim' })
+    vim.notify(
+      '`disable` is deprecated, use `ft_blocklist` instead',
+      vim.log.levels.WARN,
+      { title = 'trim.nvim' }
+    )
     opts.ft_blocklist = opts.disable
   end
 
   M.config = vim.tbl_deep_extend('force', default_config, opts)
 
-  -- preserve user-specified patterns, reset if not specified
-  local user_patterns = opts.patterns or {}
-  M.config.patterns = {}
-  for _, p in ipairs(user_patterns) do
-    table.insert(M.config.patterns, p)
-  end
-
-  if M.config.trim_trailing and M.config.trim_current_line then
-    table.insert(M.config.patterns, [[%s/\s\+$//e]])
-  end
-  if M.config.trim_first_line then
-    table.insert(M.config.patterns, [[%s/\%^\n\+//]])
-  end
-  if M.config.trim_last_line then
-    table.insert(M.config.patterns, [[%s/\($\n\s*\)\+\%$//]])
-  end
+  -- Build resolved patterns from config
+  M.config.patterns = build_patterns(M.config)
 
   if M.config.highlight then
-    require("trim.highlighter").setup()
+    require('trim.highlighter').setup()
   end
 end
 
+---Get current config.
+---@return trim.Config
 function M.get()
   return M.config
 end
